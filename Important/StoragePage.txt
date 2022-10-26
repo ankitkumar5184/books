@@ -1,0 +1,159 @@
+import MenuPage from "../../../MenuPage";
+var storage = 0;
+var disktype = 0;
+var resoucespersite = 0;
+
+class StoragePage extends MenuPage {
+    STORAGE_XP = "(//a[.='Storage'])[1]"
+    STORAGE_TIERS_GRAPH_XP = `((//*[local-name()='svg']//*[local-name()='g' and @class="highcharts-series-group"])[1]//*[name()='path' and @transform='translate(0,0)'])`
+    STORAGE_TIERS_GRAPH_VALUE_RETREIVE_XP = `((//*[local-name()='svg']//*[local-name()='g' and @data-z-index='8'])[1]//*[name()='text']//*[name()='tspan'])[4]`
+    STORAGE_TIERS_TBL_XP = `(//table[@class='MuiTable-root css-pao4ma'])[1]//following-sibling::tbody//tr`
+    STORAGE_TBL_VALUE_XP = `((//h5[.="Storage Tiers"]//following::tbody)[1]//tr//td[2])`
+    DISK_TYPE_GRAPH_XP = `((//*[local-name()='svg']//*[local-name()='g' and @class="highcharts-series-group"])[2]//*[name()='path' and @transform='translate(0,0)'])`
+    DISK_TYPE_GRAPH_VALUE_RETREIVE_XP = `((//*[local-name()='svg']//*[local-name()='g' and @data-z-index='8'])[2]//*[name()='text']//*[name()='tspan'])[4]`
+    DISK_TYPE_TBL_XP = `(//table[@class='MuiTable-root css-pao4ma'])[2]//following-sibling::tbody//tr`
+    DISK_TBL_VALUE_XP = `((//h5[.="Disk Types"]//following::tbody)[1]//tr//td[2])`
+    RESOURCES_PERSITE_GRAPH_XP = `((//*[local-name()='svg']//*[local-name()='g' and @class="highcharts-series-group"])[3]//*[name()='rect' and @stroke-width="1"])`
+    RESOURCES_PERSITE_GRAPH_VALUE_RETREIVE_XP = `((//*[local-name()='svg']//*[local-name()='g' and @data-z-index='8'])[3]//*[name()='text']//*[name()='tspan'])[4]`
+    RESOURCE_PERSITE_TBL_XP = `(//table[@class='MuiTable-root css-pao4ma'])[3]//following-sibling::tbody//tr`
+    RESOURCE_PERSITE_TBL_VALUE_XP = `((//h5[.="Resources Per Site"]//following::tbody)[1]//tr//td[2])`
+
+
+    navigateToCloudStorage() {
+        cy.get('.MuiDrawer-root').then(($root) => {
+            if (!$root.find(`${this.DRAWER}${this.DRAWER_EXPAND}`)
+                .length)
+                cy.get(this.DRAWER).contains('Inventory').click()
+            cy.get(this.DRAWER).contains('Cloud').click()
+            cy.get(this.DRAWER).contains("Azure").click()
+            cy.xpath(this.STORAGE_XP).click()
+        })
+    }
+
+    storageTypeGraph() {
+        cy.xpath(this.STORAGE_TIERS_GRAPH_XP).then(($text) => {
+            let length = `${$text.length}`
+
+            for (let i = 1; i <= length; i++) {
+                cy.xpath(this.STORAGE_TIERS_GRAPH_XP + `[${i}]`).invoke('show').wait(1000)
+                    .trigger('mouseover', { force: true }).then(($listText) => {
+                        cy.xpath(this.STORAGE_TIERS_GRAPH_VALUE_RETREIVE_XP).wait(800)
+                            .trigger('mousemove', { force: true }).then(($text1) => {
+                                let textValue1 = parseInt($text1.text())
+                                cy.log(textValue1)
+                                storage += textValue1
+                            })
+                    })
+            }
+            cy.then(() => {
+                cy.log("storage Count:- " + storage)
+            })
+        })
+    }
+
+    verifyTheTotalOfstorageGraph() {
+        var storageTypesTableDataSum = 0;
+
+        cy.xpath(this.STORAGE_TIERS_TBL_XP).then($text => {
+            var tblLength = $text.length
+            cy.log("Storage Types table length is: " + tblLength)
+
+            for (let i = 1; i <= tblLength; i++) {
+                cy.xpath(this.STORAGE_TBL_VALUE_XP + `[${i}]`).then(($text) => {
+                    let textValue6 = parseInt($text.text())
+                    cy.log(textValue6)
+                    storageTypesTableDataSum += textValue6
+                })
+            }
+            cy.then(() => {
+                cy.log("Storage Types table data sum is:- " + storageTypesTableDataSum)
+                assert.equal(storageTypesTableDataSum, storage)
+            })
+        })
+    }
+
+    diskTypeGraph() {
+        cy.xpath(this.DISK_TYPE_GRAPH_XP).then(($text) => {
+            let length = `${$text.length}`
+
+            for (let i = 1; i <= length; i++) {
+                cy.xpath(this.DISK_TYPE_GRAPH_XP + `[${i}]`).invoke('show').wait(1000)
+                    .trigger('mouseover', { force: true }).then(($listText) => {
+                        cy.xpath(this.DISK_TYPE_GRAPH_VALUE_RETREIVE_XP).wait(800)
+                            .trigger('mousemove', { force: true }).then(($text1) => {
+                                let textValue1 = parseInt($text1.text())
+                                cy.log(textValue1)
+                                disktype += textValue1
+                            })
+                    })
+            }
+            cy.then(() => {
+                cy.log("storage Count:- " + disktype)
+            })
+        })
+    }
+
+    verifyTheTotalOfDiskGraph() {
+        var diskTypesTableDataSum = 0;
+
+        cy.xpath(this.DISK_TYPE_TBL_XP).then($text => {
+            var tblLength = $text.length
+            cy.log("Disk Types table length is: " + tblLength)
+
+            for (let i = 1; i <= tblLength; i++) {
+                cy.xpath(this.DISK_TBL_VALUE_XP + `[${i}]`).then(($text) => {
+                    let textValue6 = parseInt($text.text())
+                    cy.log(textValue6)
+                    diskTypesTableDataSum += textValue6
+                })
+            }
+            cy.then(() => {
+                cy.log("Disk Types table data sum is:- " + diskTypesTableDataSum)
+                assert.equal(diskTypesTableDataSum, disktype)
+            })
+        })
+    }
+
+    resorcesPerSiteGraph() {
+        cy.xpath(this.RESOURCES_PERSITE_GRAPH_XP).then(($text) => {
+            let length = `${$text.length}`
+
+            for (let i = 1; i <= length; i++) {
+                cy.xpath(this.RESOURCES_PERSITE_GRAPH_XP + `[${i}]`).invoke('show').wait(1000)
+                    .trigger('mouseover', { force: true }).then(($listText) => {
+                        cy.xpath(this.RESOURCES_PERSITE_GRAPH_VALUE_RETREIVE_XP).wait(800)
+                            .trigger('mousemove', { force: true }).then(($text1) => {
+                                let textValue1 = parseInt($text1.text())
+                                cy.log(textValue1)
+                                    resoucespersite += textValue1
+                            })
+                    })
+            }
+            cy.then(() => {
+                cy.log("storage Count:- " +     resoucespersite)
+            })
+        })
+    }
+
+    verifyTheTotalOfResourcePerSiteGraph() {
+        var resourcePerSiteTableDataSum = 0;
+
+        cy.xpath(this.RESOURCE_PERSITE_TBL_XP).then($text => {
+            var tblLength = $text.length
+            cy.log("Resources Per Site table length is: " + tblLength)
+
+            for (let i = 1; i <= tblLength; i++) {
+                cy.xpath(this.RESOURCE_PERSITE_TBL_VALUE_XP + `[${i}]`).then(($text) => {
+                    let textValue6 = parseInt($text.text())
+                    cy.log(textValue6)
+                    resourcePerSiteTableDataSum += textValue6
+                })
+            }
+            cy.then(() => {
+                cy.log("Resources Per Site table data sum is:- " + resourcePerSiteTableDataSum)
+                assert.equal(resourcePerSiteTableDataSum, resoucespersite)
+            })
+        })
+    }
+}
+export default StoragePage

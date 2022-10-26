@@ -1,0 +1,179 @@
+import MenuPage from "../../../MenuPage";
+var resources = 0;
+var resourcesGroups = 0;
+var resourcespersite = 0;
+var costPerType = 0;
+
+
+class DashboardPage extends MenuPage {
+    DASHBOARD_XP = "(//a[.='Dashboard'])[2]"
+    RESOUCES_GRAPH_XP = `((//*[local-name()='svg']//*[local-name()='g' and @class="highcharts-series-group"])[1]//*[name()='path' and @transform='translate(0,0)'])`
+    RESOURCES_GRAPH_VALU_RETRIEVE_XP = "((//*[local-name()='svg']//*[local-name()='g' and @data-z-index='8'])[1]//*[name()='text']//*[name()='tspan'])[4]"
+    COST_PER_TYPE_GRAPH_VALUE_RETRIEVE_XP = "((//*[local-name()='svg']//*[local-name()='g' and @data-z-index='8'])[4]//*[name()='text']//*[name()='tspan'])[4]"
+    RESOURCES_GROUP_XP = `((//*[local-name()='svg']//*[local-name()='g' and @class="highcharts-series-group"])[2]//*[name()='path' and @transform='translate(0,0)'])`
+    RESOURCES_GROUP_GRAPH_VALUE_RETRIEVE_XP = `((//*[local-name()='svg']//*[local-name()='g' and @data-z-index='8'])[2]//*[name()='text']//*[name()='tspan'])[4]`
+    RESOURCES_TBL_LENGTH_XP = "(//table[@class='MuiTable-root css-pao4ma'])[2]//following-sibling::tbody//tr"
+    RESOURCES_PER_SITE_GRAPH_XP = `((//*[local-name()='svg']//*[local-name()='g' and @class="highcharts-series-group"])[3]//*[name()='rect' and @stroke-width="1"])`
+    RESOURCES_TBL_VALUES_XP = `(//h5[.="Resources"]//following::td)[2]`
+    RESOURCE_TYPE_GRAPH_XP = "((//*[local-name()='svg']//*[name()='g' and @transform='translate(32,10) scale(1 1)'])[2]//*[name()='path'])"
+    COST_PER_TYPE_GRAPH_XP = `((//*[local-name()='svg']//*[local-name()='g' and @class="highcharts-series-group"])[4]//*[name()='path' and @transform='translate(0,0)'])`
+    ROW_PER_PAGE_PATH = '.MuiTablePagination-displayedRows'
+    RESOURCE_TYPE_DROP_DOWN_XP = '//div[@id="costSelector"]'
+
+    navigateToCloudDashboard() {
+        cy.get('.MuiDrawer-root').then(($root) => {
+            if (!$root.find(`${this.DRAWER}${this.DRAWER_EXPAND}`)
+                .length)
+                cy.get(this.DRAWER).contains('Inventory').click()
+            cy.get(this.DRAWER).contains('Cloud').click()
+            cy.get(this.DRAWER).contains("Azure").click()
+            cy.xpath(this.DASHBOARD_XP).click()
+        })
+    }
+
+    resourcesGraph() {
+        cy.xpath(this.RESOUCES_GRAPH_XP).then(($text) => {
+            let length = `${$text.length}`
+
+            for (let i = 1; i < length; i++) {
+                cy.xpath(this.RESOUCES_GRAPH_XP + `[${i}]`).invoke('show').wait(1000)
+                    .trigger('mouseover', { force: true }).then(($listText) => {
+                        cy.xpath(this.RESOURCES_GRAPH_VALU_RETRIEVE_XP).wait(800)
+                            .trigger('mousemove', { force: true }).then(($text1) => {
+                                let textValue1 = parseInt($text1.text())
+                                cy.log(textValue1)
+                                resources += textValue1
+                            })
+                    })
+            }
+            cy.then(() => {
+                cy.log("Resources Count:- " + resources)
+            })
+        })
+    }
+
+    verifyTheTotalOfResourcesGraph() {
+        var osTableDataSum = 0;
+
+        cy.xpath(this.RESOURCES_TBL_LENGTH_XP).then($text => {
+            var tblLength = $text.length
+            cy.log("Resources table length is: " + tblLength)
+            cy.xpath(this.RESOURCES_TBL_VALUES_XP).wait(500).then(($text) => {
+                let textValue = parseInt($text.text())
+                cy.log(textValue)
+                osTableDataSum += textValue
+            })
+            cy.then(() => {
+                cy.log("Resources table data sum is:- " + osTableDataSum)
+                assert.equal(resources, osTableDataSum)
+            })
+        })
+    }
+
+    resourcesGroupsGraph() {
+        cy.xpath(this.RESOURCES_GROUP_XP).then(($text) => {
+            let length = `${$text.length}`
+
+            for (let i = 1; i < length; i++) {
+                cy.xpath(this.RESOURCES_GROUP_XP + `[${i}]`).invoke('show').wait(1000)
+                    .trigger('mouseover', { force: true }).then(($listText) => {
+                        cy.xpath(this.RESOURCES_GROUP_GRAPH_VALUE_RETRIEVE_XP).wait(800)
+                            .trigger('mousemove', { force: true }).then(($text1) => {
+                                let textValue1 = parseInt($text1.text())
+                                cy.log(textValue1)
+                                resourcesGroups += textValue1
+                            })
+                    })
+            }
+            cy.then(() => {
+                cy.log("Resources Group:- " + resourcesGroups)
+            })
+        })
+    }
+
+    resourcesPerSiteGraph() {
+        cy.xpath(this.RESOURCES_PER_SITE_GRAPH_XP).then(($text) => {
+            let length = `${$text.length}`
+            cy.log(length)
+            for (let i = 1; i <= length; i++) {
+                cy.xpath(this.RESOURCES_PER_SITE_GRAPH_XP + `[${i}]`).invoke('show').wait(1000)
+                    .trigger('mouseover', { force: true })
+            }
+        })
+    }
+    
+
+    costPerTypeGraph() {
+        cy.xpath(this.COST_PER_TYPE_GRAPH_XP).then(($text) => {
+            let length = `${$text.length}`
+
+            for (let i = 1; i < length; i++) {
+                cy.xpath(this.COST_PER_TYPE_GRAPH_XP + `[${i}]`).scrollIntoView().invoke('show').wait(1000)
+                    .trigger('mouseover', { force: true }).then(($listText) => {
+                        cy.xpath(this.COST_PER_TYPE_GRAPH_VALUE_RETRIEVE_XP).wait(800)
+                            .trigger('mousemove', { force: true }).then(($text1) => {
+                                let countValue = parseFloat($text1.text())
+                                cy.log(countValue)
+                                costPerType += countValue
+                            })
+                    })
+            }
+            cy.then(() => {
+                cy.log("cost per type Count:- " + costPerType)
+            })
+        })
+    }
+
+    resourceTypeGraph() {
+        cy.xpath(this.RESOURCE_TYPE_DROP_DOWN_XP).click()
+        cy.get('li').contains('Virtual Machines').click()
+
+        cy.xpath(this.RESOURCE_TYPE_GRAPH_XP).then(($text) => {
+            let length = `${$text.length}`
+
+            for (let i = 1; i <= length; i++) {
+                cy.xpath(this.RESOURCE_TYPE_GRAPH_XP + `[${i}]`).scrollIntoView().wait(1000)
+                    .trigger('mousemove', { force: true })   
+            }
+        })
+    }
+
+    resourcesCreatedTable() {
+        var rowCount = 0;
+        var tblLength = 0;
+
+        cy.wait(1000)
+        cy.get('.MuiTable-stickyHeader').eq(0)
+            .find('tbody>tr')
+            .then(($text) => {
+                tblLength = $text.length
+                cy.log(tblLength)
+            }).then(() => {
+                cy.get(this.ROW_PER_PAGE_PATH).eq(0).invoke('text').then(($row) => {
+                    rowCount = $row.split(" ")
+                    cy.log(rowCount[2])
+                    assert.equal(parseInt(rowCount[2]), tblLength)
+                })
+            })
+    }
+
+    stoppedResourcesTable() {
+        var rowCount = 0;
+        var tblLength = 0;
+
+        cy.wait(1000)
+        cy.get('.MuiTable-stickyHeader').eq(1)
+            .find('tbody>tr')
+            .then(($text) => {
+                tblLength = $text.length
+                cy.log(tblLength)
+            }).then(() => {
+                cy.get(this.ROW_PER_PAGE_PATH).eq(1).invoke('text').then(($row) => {
+                    rowCount = $row.split(" ")
+                    cy.log(rowCount[2])
+                    assert.equal(parseInt(rowCount[2]), tblLength)
+                })
+            })
+    }
+}
+export default DashboardPage
